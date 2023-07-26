@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"strings"
 
 	"github.com/NVIDIA/go-nvml/pkg/nvml"
 )
@@ -55,7 +56,7 @@ func GetGpu(gpu *NodeInfo) {
 			log.Printf("Unable to get name of device at index %d: %v", i, nvml.ErrorString(ret))
 			return
 		}
-		detail.ProductName = name
+		detail.ProductName = convertName(name)
 
 		bar1MemoryInfo, ret := device.GetBAR1MemoryInfo()
 		if ret != nvml.SUCCESS {
@@ -79,4 +80,23 @@ func GetGpu(gpu *NodeInfo) {
 
 		gpu.Gpu.Details = append(gpu.Gpu.Details, detail)
 	}
+}
+
+func convertName(name string) string {
+	if strings.Contains(name, "NVIDIA") {
+		if strings.Contains(name, "Tesla") {
+			return strings.Replace(name, "Tesla ", "", 1)
+		}
+
+		if strings.Contains(name, "GeForce") {
+			name = strings.Replace(name, "GeForce ", "", 1)
+		}
+		return strings.Replace(name, "RTX ", "", 1)
+	} else {
+		if strings.Contains(name, "GeForce") {
+			cpName := strings.Replace(name, "GeForce ", "NVIDIA", 1)
+			return strings.Replace(cpName, "RTX", "", 1)
+		}
+	}
+	return name
 }

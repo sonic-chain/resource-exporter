@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	"hardware-collect/device"
+	"github.com/lagrangedao/resource-exporter/device"
 	"log"
 	"time"
 )
