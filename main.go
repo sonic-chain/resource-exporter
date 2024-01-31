@@ -26,7 +26,7 @@ func printLog() {
 	gpuInfo := new(device.NodeInfo)
 	err := device.GetGpu(gpuInfo)
 	if err != nil {
-		fmt.Printf("If the node has a GPU, you need to check that the nvidia plugin is installed correctly. If there is no GPU, you can ignore this error. %v \n", err)
+		fmt.Printf("If the node has a GPU, this error can be ignored. %v \n", err)
 		return
 	}
 
