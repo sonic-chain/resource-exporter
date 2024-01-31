@@ -2,43 +2,39 @@ package device
 
 import (
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 
 	"github.com/NVIDIA/go-nvml/pkg/nvml"
 )
 
-func GetGpu(gpu *NodeInfo) {
+func GetGpu(gpu *NodeInfo) error {
 	ret := nvml.Init()
 	if ret != nvml.SUCCESS {
-		log.Fatalf("Unable to initialize NVML: %v", nvml.ErrorString(ret))
+		return fmt.Errorf("ERROR:: unable to initialize NVML: %v", nvml.ErrorString(ret))
 	}
 	defer func() {
 		ret := nvml.Shutdown()
 		if ret != nvml.SUCCESS {
-			log.Fatalf("Unable to shutdown NVML: %v", nvml.ErrorString(ret))
+			return
 		}
 	}()
 
 	count, ret := nvml.DeviceGetCount()
 	if ret != nvml.SUCCESS {
-		log.Printf("Unable to get device count: %v", nvml.ErrorString(ret))
-		return
+		return fmt.Errorf("ERROR:: unable to get device count: %v", nvml.ErrorString(ret))
 	}
 	gpu.Gpu.AttachedGpus = count
 
 	driverVersion, ret := nvml.SystemGetDriverVersion()
 	if ret != nvml.SUCCESS {
-		log.Printf("Unable to get device count: %v", nvml.ErrorString(ret))
-		return
+		return fmt.Errorf("ERROR:: unable to get device version: %v", nvml.ErrorString(ret))
 	}
 	gpu.Gpu.DriverVersion = driverVersion
 
 	cudaDriverVersion, ret := nvml.SystemGetCudaDriverVersion_v2()
 	if ret != nvml.SUCCESS {
-		log.Printf("Unable to get device count: %v", nvml.ErrorString(ret))
-		return
+		return fmt.Errorf("ERROR:: unable to get device cuda version: %v", nvml.ErrorString(ret))
 	}
 	gpu.Gpu.CudaVersion = strconv.Itoa(cudaDriverVersion)
 
@@ -47,21 +43,18 @@ func GetGpu(gpu *NodeInfo) {
 
 		device, ret := nvml.DeviceGetHandleByIndex(i)
 		if ret != nvml.SUCCESS {
-			log.Printf("Unable to get device at index %d: %v", i, nvml.ErrorString(ret))
-			return
+			return fmt.Errorf("ERROR:: unable to get device index: %v", nvml.ErrorString(ret))
 		}
 
 		name, ret := device.GetName()
 		if ret != nvml.SUCCESS {
-			log.Printf("Unable to get name of device at index %d: %v", i, nvml.ErrorString(ret))
-			return
+			return fmt.Errorf("ERROR:: unable to get device name: %v", nvml.ErrorString(ret))
 		}
 		detail.ProductName = convertName(name)
 
 		bar1MemoryInfo, ret := device.GetBAR1MemoryInfo()
 		if ret != nvml.SUCCESS {
-			log.Printf("Unable to get bar1_memory of device at index %d: %v", i, nvml.ErrorString(ret))
-			return
+			return fmt.Errorf("ERROR:: unable to get bar1_memory of device at index %d: %v", i, nvml.ErrorString(ret))
 		}
 
 		detail.Bar1MemoryUsage.Total = fmt.Sprintf("%d MiB", bar1MemoryInfo.Bar1Total/1024/1024)
@@ -70,8 +63,7 @@ func GetGpu(gpu *NodeInfo) {
 
 		memoryInfo, ret := device.GetMemoryInfo()
 		if ret != nvml.SUCCESS {
-			log.Printf("Unable to get memory of device at index %d: %v", i, nvml.ErrorString(ret))
-			return
+			return fmt.Errorf("ERROR:: unable to get memory of device at index %d: %v", i, nvml.ErrorString(ret))
 		}
 
 		detail.FbMemoryUsage.Total = fmt.Sprintf("%d MiB", memoryInfo.Total/1024/1024)
@@ -80,6 +72,7 @@ func GetGpu(gpu *NodeInfo) {
 
 		gpu.Gpu.Details = append(gpu.Gpu.Details, detail)
 	}
+	return nil
 }
 
 func convertName(name string) string {

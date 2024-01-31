@@ -2,8 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/lagrangedao/resource-exporter/device"
-	"log"
 	"time"
 )
 
@@ -24,11 +24,15 @@ func main() {
 
 func printLog() {
 	gpuInfo := new(device.NodeInfo)
-	device.GetGpu(gpuInfo)
+	err := device.GetGpu(gpuInfo)
+	if err != nil {
+		fmt.Printf("If the node has a GPU, you need to check that the nvidia plugin is installed correctly. If there is no GPU, you can ignore this error. %v \n", err)
+		return
+	}
 
 	marshal, err := json.Marshal(gpuInfo)
 	if err != nil {
-		log.Println(err)
+		fmt.Printf("ERROR:: convert to json failed, %v \n", err)
 		return
 	}
 	println(string(marshal))
