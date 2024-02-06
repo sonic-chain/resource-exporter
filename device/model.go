@@ -3,7 +3,8 @@ package device
 type NodeInfo struct {
 	//MachineId string `json:"machine_id"`
 	//Hostname string `json:"hostname"`
-	Gpu Gpu `json:"gpu"`
+	Gpu     Gpu    `json:"gpu"`
+	CpuName string `json:"cpu_name"`
 }
 
 type Gpu struct {

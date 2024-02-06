@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/lagrangedao/resource-exporter/device"
+	"os/exec"
+	"strings"
 	"time"
 )
 
@@ -23,14 +25,26 @@ func main() {
 }
 
 func printLog() {
-	gpuInfo := new(device.NodeInfo)
-	err := device.GetGpu(gpuInfo)
+	nodeInfo := new(device.NodeInfo)
+	err := device.GetGpu(nodeInfo)
 	if err != nil {
 		fmt.Printf("If the node has a GPU, this error can be ignored. %v \n", err)
 		return
 	}
 
-	marshal, err := json.Marshal(gpuInfo)
+	cmd := exec.Command("sh", "-c", "lscpu | grep 'Model name'")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		fmt.Printf("ERROR:: executing command: %v\n", err)
+		return
+	}
+	if strings.Contains(strings.ToUpper(string(output)), "AMD") {
+		nodeInfo.CpuName = "AMD"
+	} else if strings.Contains(strings.ToUpper(string(output)), "INTEL") {
+		nodeInfo.CpuName = "INTEL"
+	}
+
+	marshal, err := json.Marshal(nodeInfo)
 	if err != nil {
 		fmt.Printf("ERROR:: convert to json failed, %v \n", err)
 		return
