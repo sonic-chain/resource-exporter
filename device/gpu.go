@@ -88,6 +88,14 @@ func convertName(name string) string {
 		if strings.Contains(name, "GeForce") {
 			name = strings.Replace(name, "GeForce ", "", 1)
 		}
+
+		if strings.Contains(name, "PCIE 40GB") {
+			name = strings.Replace(name, "PCIE 40GB", "", 1)
+		}
+		if strings.Contains(name, "PCIE 80GB") {
+			name = strings.Replace(name, "PCIE 80GB", "", 1)
+		}
+
 		return strings.Replace(name, "RTX ", "", 1)
 	} else {
 		if strings.Contains(name, "GeForce") {
