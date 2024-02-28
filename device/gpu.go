@@ -76,6 +76,10 @@ func GetGpu(gpu *NodeInfo) error {
 }
 
 func convertName(name string) string {
+	if strings.Contains(name, "Tesla") && !(strings.Contains(strings.ToUpper(name), "NVIDIA")) {
+		return strings.Replace(name, "NVIDIA", "", 1)
+	}
+
 	if strings.Contains(name, "NVIDIA") {
 		if strings.Contains(name, "Tesla") {
 			return strings.Replace(name, "Tesla ", "", 1)
