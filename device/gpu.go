@@ -50,7 +50,7 @@ func GetGpu(gpu *NodeInfo) error {
 		if ret != nvml.SUCCESS {
 			return fmt.Errorf("ERROR:: unable to get device name: %d", ret)
 		}
-		detail.ProductName = convertName(name)
+		detail.ProductName = strings.ToUpper(convertName(name))
 
 		bar1MemoryInfo, ret := device.GetBAR1MemoryInfo()
 		if ret != nvml.SUCCESS {
