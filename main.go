@@ -28,8 +28,12 @@ func printLog() {
 	nodeInfo := new(device.NodeInfo)
 	err := device.GetGpu(nodeInfo)
 	if err != nil {
-		fmt.Printf("If the node has a GPU, this error can be ignored. %v \n", err)
-		return
+		if strings.Contains(err.Error(), "12") {
+			fmt.Printf("The node not found nvm libnvidia, if the node does not have a GPU, this error can be ignored.\n")
+		} else {
+			fmt.Printf("%+v\n", err)
+			return
+		}
 	}
 
 	cmd := exec.Command("sh", "-c", "lscpu | grep 'Model name'")
