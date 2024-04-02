@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/lagrangedao/resource-exporter/device"
-	"os/exec"
 	"strings"
 	"time"
 )
@@ -36,16 +35,9 @@ func printLog() {
 		}
 	}
 
-	cmd := exec.Command("sh", "-c", "lscpu | grep 'Model name'")
-	output, err := cmd.CombinedOutput()
+	err = device.GetHardwareData(nodeInfo)
 	if err != nil {
-		fmt.Printf("ERROR:: executing command: %v\n", err)
-		return
-	}
-	if strings.Contains(strings.ToUpper(string(output)), "AMD") {
-		nodeInfo.CpuName = "AMD"
-	} else if strings.Contains(strings.ToUpper(string(output)), "INTEL") {
-		nodeInfo.CpuName = "INTEL"
+		fmt.Printf("%+v\n", err)
 	}
 
 	marshal, err := json.Marshal(nodeInfo)

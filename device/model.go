@@ -1,10 +1,13 @@
 package device
 
 type NodeInfo struct {
-	//MachineId string `json:"machine_id"`
-	//Hostname string `json:"hostname"`
-	Gpu     Gpu    `json:"gpu"`
-	CpuName string `json:"cpu_name"`
+	Gpu       Gpu    `json:"gpu"`
+	MachineId string `json:"machine_id"`
+	CpuName   string `json:"cpu_name"`
+	Cpu       Common `json:"cpu"`
+	Vcpu      Common `json:"vcpu"`
+	Memory    Common `json:"memory"`
+	Storage   Common `json:"storage"`
 }
 
 type Gpu struct {
