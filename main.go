@@ -37,7 +37,8 @@ func printLog() {
 
 	err = device.GetHardwareData(nodeInfo)
 	if err != nil {
-		fmt.Printf("%+v\n", err)
+		fmt.Printf("ERROR:: get hardware failed, %v\n", err)
+		return
 	}
 
 	marshal, err := json.Marshal(nodeInfo)
