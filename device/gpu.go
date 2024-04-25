@@ -63,13 +63,22 @@ func GetGpu(gpu *NodeInfo) error {
 
 		memoryInfo, ret := device.GetMemoryInfo()
 		if ret != nvml.SUCCESS {
-			return fmt.Errorf("ERROR:: unable to get memory of device at index %d: %d", i, nvml.ErrorString(ret))
+			return fmt.Errorf("ERROR:: unable to get memory of device at index %d: %s", i, nvml.ErrorString(ret))
 		}
 
 		detail.FbMemoryUsage.Total = fmt.Sprintf("%d MiB", memoryInfo.Total/1024/1024)
 		detail.FbMemoryUsage.Used = fmt.Sprintf("%d MiB", memoryInfo.Used/1024/1024)
 		detail.FbMemoryUsage.Free = fmt.Sprintf("%d MiB", memoryInfo.Free/1024/1024)
 
+		processes, err := deviceGetAllRunningProcesses(device)
+		if err != nil {
+			return fmt.Errorf("ERROR:: get gpu status %d: %s", i, nvml.ErrorString(ret))
+		}
+		if len(processes) > 0 {
+			detail.Status = 1
+		} else {
+			detail.Status = 0
+		}
 		gpu.Gpu.Details = append(gpu.Gpu.Details, detail)
 	}
 	return nil
@@ -96,4 +105,26 @@ func convertName(name string) string {
 		}
 	}
 	return name
+}
+
+func deviceGetAllRunningProcesses(device nvml.Device) ([]nvml.ProcessInfo, error) {
+	process1, ret := device.GetComputeRunningProcesses()
+	if ret != nvml.SUCCESS {
+		return nil, fmt.Errorf("ERROR:: unable to get device index: %d", ret)
+	}
+
+	process2, ret := device.GetGraphicsRunningProcesses()
+	if ret != nvml.SUCCESS {
+		return nil, fmt.Errorf("ERROR:: unable to get device index: %d", ret)
+	}
+
+	processInfo := make([]nvml.ProcessInfo, 0)
+
+	if len(process1) > 0 {
+		processInfo = append(processInfo, process1...)
+	}
+	if len(process2) > 0 {
+		processInfo = append(processInfo, process2...)
+	}
+	return processInfo, nil
 }
