@@ -75,9 +75,9 @@ func GetGpu(gpu *NodeInfo) error {
 			return fmt.Errorf("ERROR:: get gpu status %d: %s", i, nvml.ErrorString(ret))
 		}
 		if len(processes) > 0 {
-			detail.Status = 1
+			detail.Status = "occupied"
 		} else {
-			detail.Status = 0
+			detail.Status = "available"
 		}
 		gpu.Gpu.Details = append(gpu.Gpu.Details, detail)
 	}
