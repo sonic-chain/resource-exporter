@@ -39,7 +39,7 @@ func GetHardwareData(node *NodeInfo) error {
 		return err
 	}
 
-	percent, err := cpu.Percent(30*time.Second, false)
+	percent, err := cpu.Percent(5*time.Second, false)
 	if err != nil {
 		return err
 	}
