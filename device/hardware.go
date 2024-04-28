@@ -50,10 +50,9 @@ func GetHardwareData(node *NodeInfo) error {
 	}
 	averagePercent := totalPercent / float64(len(percent))
 	useCount := int(math.Round(float64(counts) * averagePercent))
-
-	node.Cpu.Total = fmt.Sprintf("%d", counts)
-	node.Cpu.Used = fmt.Sprintf("%d", useCount)
-	node.Cpu.Free = fmt.Sprintf("%d", counts-useCount)
+	if useCount >= counts {
+		useCount = counts
+	}
 
 	node.Cpu.Total = fmt.Sprintf("%d", counts)
 	node.Cpu.Used = fmt.Sprintf("%d", useCount)
