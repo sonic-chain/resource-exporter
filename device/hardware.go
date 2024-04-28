@@ -44,12 +44,7 @@ func GetHardwareData(node *NodeInfo) error {
 		return err
 	}
 
-	totalPercent := 0.0
-	for _, p := range percent {
-		totalPercent += p
-	}
-	averagePercent := totalPercent / float64(len(percent))
-	useCount := int(math.Round(float64(counts) * averagePercent))
+	useCount := int(math.Round(float64(counts) * percent[0]))
 	if useCount >= counts {
 		useCount = counts
 	}
