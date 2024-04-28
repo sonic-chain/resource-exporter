@@ -39,11 +39,12 @@ func GetHardwareData(node *NodeInfo) error {
 		return err
 	}
 
-	percent, err := cpu.Percent(5*time.Second, false)
+	percent, err := cpu.Percent(30*time.Second, false)
 	if err != nil {
 		return err
 	}
 
+	println("percent: ", percent[0])
 	useCount := int(math.Round(float64(counts) * percent[0]))
 	if useCount >= counts {
 		useCount = counts
