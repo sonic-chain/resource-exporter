@@ -27,7 +27,7 @@ func GetHardwareData(node *NodeInfo) error {
 	}
 	node.Memory.Total = fmt.Sprintf("%d GiB", vmStat.Total/1024/1024/1024)
 	node.Memory.Used = fmt.Sprintf("%d GiB", vmStat.Used/1024/1024/1024)
-	node.Memory.Free = fmt.Sprintf("%d GiB", vmStat.Free/1024/1024/1024)
+	node.Memory.Free = fmt.Sprintf("%d GiB", vmStat.Available/1024/1024/1024)
 
 	counts, err := cpu.Counts(true)
 	if err != nil {
