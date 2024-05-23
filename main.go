@@ -3,8 +3,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/NVIDIA/go-nvml/pkg/nvml"
 	"github.com/lagrangedao/resource-exporter/device"
-	"strings"
 	"time"
 )
 
@@ -25,26 +25,19 @@ func main() {
 
 func printLog() {
 	nodeInfo := new(device.NodeInfo)
-	err := device.GetGpu(nodeInfo)
-	if err != nil {
-		if strings.Contains(err.Error(), "12") {
-			fmt.Printf("The node not found nvm libnvidia, if the node does not have a GPU, this error can be ignored.\n")
-		} else {
-			fmt.Printf("%+v\n", err)
-			return
-		}
+	ret := device.GetGpu(nodeInfo)
+	if ret != nvml.SUCCESS {
+		fmt.Printf("The node initialize nvm libnvidia failed, if the node does not have a GPU, this error can be ignored. code: %d\n", ret)
 	}
 
-	err = device.GetHardwareData(nodeInfo)
+	err := device.GetHardwareData(nodeInfo)
 	if err != nil {
 		fmt.Printf("ERROR:: get hardware failed, %v\n", err)
-		return
 	}
 
 	marshal, err := json.Marshal(nodeInfo)
 	if err != nil {
 		fmt.Printf("ERROR:: convert to json failed, %v \n", err)
-		return
 	}
 	println(string(marshal))
 }
