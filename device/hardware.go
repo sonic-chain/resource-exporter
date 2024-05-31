@@ -2,6 +2,7 @@ package device
 
 import (
 	"fmt"
+	"github.com/shirou/gopsutil/host"
 	"log"
 	"math"
 	"os"
@@ -42,12 +43,11 @@ func GetHardwareData(node *NodeInfo) error {
 	node.Vcpu.Used = node.Cpu.Used
 	node.Vcpu.Free = node.Cpu.Free
 
-	data, err := os.ReadFile("/etc/machine-id")
+	hostStat, err := host.Info()
 	if err != nil {
 		return err
 	}
-	uuid := strings.TrimSpace(string(data))
-	node.MachineId = fmt.Sprintf("%s-%s-%s-%s-%s", uuid[0:8], uuid[8:12], uuid[12:16], uuid[16:20], uuid[20:32])
+	node.MachineId = hostStat.HostID
 
 	arch := runtime.GOARCH
 	if strings.Contains(strings.ToLower(arch), "intel") {
