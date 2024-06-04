@@ -117,9 +117,9 @@ func getDiskUsage(mountOn string) (*DiskUsage, error) {
 			continue
 		}
 		if fields[5] == mountOn {
-			diskUsages.Total = fields[1]
-			diskUsages.Used = fields[2]
-			diskUsages.Available = fields[3]
+			diskUsages.Total = strings.ReplaceAll(fields[1], "G", " GiB")
+			diskUsages.Used = strings.ReplaceAll(fields[2], "G", " GiB")
+			diskUsages.Available = strings.ReplaceAll(fields[2], "G", " GiB")
 		}
 	}
 	return diskUsages, nil
