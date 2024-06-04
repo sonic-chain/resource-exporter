@@ -126,11 +126,11 @@ func getDiskUsage(mountOn string) (*DiskUsage, error) {
 			}
 
 			if strings.Contains(fields[1], "G") {
-				diskUsages.Total = strings.ReplaceAll(fields[1], "G", " GiB")
+				diskUsages.Used = strings.ReplaceAll(fields[1], "G", " GiB")
 			} else if strings.Contains(fields[1], "T") {
 				tStr := strings.ReplaceAll(fields[1], "T", "")
 				tInt, _ := strconv.ParseInt(tStr, 10, 64)
-				diskUsages.Total = fmt.Sprintf("%d GiB", tInt*1024)
+				diskUsages.Used = fmt.Sprintf("%d GiB", tInt*1024)
 			}
 
 			if strings.Contains(fields[3], "G") {
