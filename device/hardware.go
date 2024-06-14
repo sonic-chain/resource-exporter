@@ -103,7 +103,7 @@ type DiskUsage struct {
 }
 
 func getDiskUsage(mountOn string) (*DiskUsage, error) {
-	cmd := exec.Command("df", "-h")
+	cmd := exec.Command("df")
 	output, err := cmd.Output()
 	if err != nil {
 		return nil, err
@@ -117,29 +117,9 @@ func getDiskUsage(mountOn string) (*DiskUsage, error) {
 			continue
 		}
 		if fields[5] == mountOn {
-			if strings.Contains(fields[1], "G") {
-				diskUsages.Total = strings.ReplaceAll(fields[1], "G", " GiB")
-			} else if strings.Contains(fields[1], "T") {
-				tStr := strings.ReplaceAll(fields[1], "T", "")
-				tInt, _ := strconv.ParseInt(tStr, 10, 64)
-				diskUsages.Total = fmt.Sprintf("%d GiB", tInt*1024)
-			}
-
-			if strings.Contains(fields[2], "G") {
-				diskUsages.Used = strings.ReplaceAll(fields[2], "G", " GiB")
-			} else if strings.Contains(fields[2], "T") {
-				tStr := strings.ReplaceAll(fields[2], "T", "")
-				tInt, _ := strconv.ParseInt(tStr, 10, 64)
-				diskUsages.Used = fmt.Sprintf("%d GiB", tInt*1024)
-			}
-
-			if strings.Contains(fields[3], "G") {
-				diskUsages.Available = strings.ReplaceAll(fields[3], "G", " GiB")
-			} else if strings.Contains(fields[3], "T") {
-				tStr := strings.ReplaceAll(fields[3], "T", "")
-				tInt, _ := strconv.ParseInt(tStr, 10, 64)
-				diskUsages.Available = fmt.Sprintf("%d GiB", tInt*1024)
-			}
+			diskUsages.Total = fmt.Sprintf("%f GiB", bytesToGiB(fields[1]))
+			diskUsages.Used = fmt.Sprintf("%f GiB", bytesToGiB(fields[2]))
+			diskUsages.Available = fmt.Sprintf("%f GiB", bytesToGiB(fields[3]))
 		}
 	}
 	return diskUsages, nil
@@ -152,7 +132,7 @@ type MemoryUsage struct {
 }
 
 func getMemoryUsage() (*MemoryUsage, error) {
-	cmd := exec.Command("free", "-m")
+	cmd := exec.Command("free")
 	output, err := cmd.Output()
 	if err != nil {
 		return nil, err
@@ -166,14 +146,11 @@ func getMemoryUsage() (*MemoryUsage, error) {
 	if len(fields) < 7 {
 		return nil, fmt.Errorf("unexpected output from free command")
 	}
-	total, _ := strconv.ParseUint(fields[1], 10, 64)
-	used, _ := strconv.ParseUint(fields[2], 10, 64)
-	available, _ := strconv.ParseUint(fields[6], 10, 64)
 
 	return &MemoryUsage{
-		Total:     fmt.Sprintf("%d GiB", total/1024),
-		Used:      fmt.Sprintf("%d GiB", used/1024),
-		Available: fmt.Sprintf("%d GiB", available/1024),
+		Total:     fmt.Sprintf("%f GiB", bytesToGiB(fields[1])),
+		Used:      fmt.Sprintf("%f GiB", bytesToGiB(fields[2])),
+		Available: fmt.Sprintf("%f GiB", bytesToGiB(fields[6])),
 	}, nil
 }
 
@@ -214,4 +191,10 @@ func checkCpuUsage() (*result, error) {
 		return res, nil
 	}
 	return res, nil
+}
+
+func bytesToGiB(bytesStr string) float64 {
+	bytes, _ := strconv.ParseUint(bytesStr, 10, 64)
+	const gibibyte = 1024 * 1024 * 1024
+	return float64(bytes) / gibibyte
 }
