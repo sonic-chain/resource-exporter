@@ -195,6 +195,6 @@ func checkCpuUsage() (*result, error) {
 
 func bytesToGiB(bytesStr string) float64 {
 	bytes, _ := strconv.ParseUint(bytesStr, 10, 64)
-	const gibibyte = 1024 * 1024 * 1024
+	const gibibyte = 1024 * 1024
 	return float64(bytes) / gibibyte
 }
