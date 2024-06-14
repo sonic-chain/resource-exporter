@@ -117,9 +117,9 @@ func getDiskUsage(mountOn string) (*DiskUsage, error) {
 			continue
 		}
 		if fields[5] == mountOn {
-			diskUsages.Total = fmt.Sprintf("%f GiB", bytesToGiB(fields[1]))
-			diskUsages.Used = fmt.Sprintf("%f GiB", bytesToGiB(fields[2]))
-			diskUsages.Available = fmt.Sprintf("%f GiB", bytesToGiB(fields[3]))
+			diskUsages.Total = fmt.Sprintf("%.2f GiB", bytesToGiB(fields[1]))
+			diskUsages.Used = fmt.Sprintf("%.2f GiB", bytesToGiB(fields[2]))
+			diskUsages.Available = fmt.Sprintf("%.2f GiB", bytesToGiB(fields[3]))
 		}
 	}
 	return diskUsages, nil
@@ -148,9 +148,9 @@ func getMemoryUsage() (*MemoryUsage, error) {
 	}
 
 	return &MemoryUsage{
-		Total:     fmt.Sprintf("%f GiB", bytesToGiB(fields[1])),
-		Used:      fmt.Sprintf("%f GiB", bytesToGiB(fields[2])),
-		Available: fmt.Sprintf("%f GiB", bytesToGiB(fields[6])),
+		Total:     fmt.Sprintf("%.2f GiB", bytesToGiB(fields[1])),
+		Used:      fmt.Sprintf("%.2f GiB", bytesToGiB(fields[2])),
+		Available: fmt.Sprintf("%.2f GiB", bytesToGiB(fields[6])),
 	}, nil
 }
 
