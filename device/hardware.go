@@ -1,13 +1,14 @@
 package device
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/shirou/gopsutil/host"
 	"log"
 	"math"
 	"os"
 	"os/exec"
-	"runtime"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -49,13 +50,37 @@ func GetHardwareData(node *NodeInfo) error {
 	}
 	node.MachineId = hostStat.HostID
 
-	arch := runtime.GOARCH
-	if strings.Contains(strings.ToLower(arch), "intel") {
-		node.CpuName = "INTEL"
-	} else if strings.Contains(strings.ToLower(arch), "amd") {
-		node.CpuName = "AMD"
+	cpuName, err := checkCpuName()
+	if err != nil {
+		return err
 	}
+	node.CpuName = cpuName
+
 	return nil
+}
+
+func checkCpuName() (string, error) {
+	cmd := exec.Command("lscpu")
+	var cpuName string
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	if err := cmd.Run(); err != nil {
+		return "", err
+	}
+
+	output := out.String()
+	re := regexp.MustCompile(`Vendor ID:\s+(.*)`)
+	matches := re.FindStringSubmatch(output)
+	if len(matches) < 2 {
+		return "", fmt.Errorf("vendor ID not found in lscpu output")
+	}
+
+	if strings.Contains(strings.ToLower(matches[1]), "intel") {
+		cpuName = "INTEL"
+	} else if strings.Contains(strings.ToLower(matches[1]), "amd") {
+		cpuName = "AMD"
+	}
+	return cpuName, nil
 }
 
 func getCpuUsage() (totalCores int, totalUsage int, availableUsage int, err error) {
