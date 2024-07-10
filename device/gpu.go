@@ -1,77 +1,174 @@
 package device
 
 import (
+	"bufio"
+	"bytes"
 	"fmt"
-	"strconv"
+	"io"
+	"os/exec"
 	"strings"
-
-	"github.com/NVIDIA/go-nvml/pkg/nvml"
 )
 
-func GetGpu(gpu *NodeInfo) nvml.Return {
-	ret := nvml.Init()
-	if ret != nvml.SUCCESS {
-		return ret
+func GetGpu(gpu *NodeInfo) error {
+	gInfo, err := getGpuInfo()
+	if err != nil {
+		return err
 	}
-	defer func() {
-		ret := nvml.Shutdown()
-		if ret != nvml.SUCCESS {
-			return
+	if gInfo != nil {
+		gpu.Gpu.AttachedGpus = len(gInfo)
+		gpu.Gpu.DriverVersion = gInfo[0].driverVersion
+	}
+
+	cudaVersion, err := getCudaVersion()
+	if err != nil {
+		return err
+	}
+	gpu.Gpu.CudaVersion = cudaVersion
+
+	useGpus, err := getUseGpu()
+	if err != nil {
+		return err
+	}
+	for _, gpuU := range useGpus {
+		for _, info := range gInfo {
+			if gpuU.guid == info.gpuUid {
+				info.status = "occupied"
+			}
 		}
-	}()
-
-	count, ret := nvml.DeviceGetCount()
-	if ret != nvml.SUCCESS {
-		return ret
 	}
-	gpu.Gpu.AttachedGpus = count
 
-	driverVersion, ret := nvml.SystemGetDriverVersion()
-	if ret != nvml.SUCCESS {
-		return ret
+	var gpuDetail []GpuDetail
+	for _, info := range gInfo {
+		gpuDetail = append(gpuDetail, GpuDetail{
+			ProductName: strings.ToUpper(convertName(info.gpuName)),
+			FbMemoryUsage: Common{
+				Total: info.memTotal,
+				Used:  info.memUsed,
+				Free:  info.memFree,
+			},
+			Status: info.status,
+		})
 	}
-	gpu.Gpu.DriverVersion = driverVersion
+	gpu.Gpu.Details = gpuDetail
+	return nil
+}
 
-	cudaDriverVersion, ret := nvml.SystemGetCudaDriverVersion_v2()
-	if ret != nvml.SUCCESS {
-		return ret
+func getGpuInfo() ([]*collectGpu, error) {
+	var cg []*collectGpu
+	var err error
+	cmd := exec.Command("nvidia-smi", "--query-gpu=index,driver_version,gpu_uuid,gpu_name,memory.total,memory.used,memory.free", "--format=csv,noheader")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return nil, fmt.Errorf("failed execute nvidia-smi, error:%v", err)
 	}
-	gpu.Gpu.CudaVersion = strconv.Itoa(cudaDriverVersion)
 
-	for i := 0; i < count; i++ {
-		var detail GpuDetail
-
-		device, ret := nvml.DeviceGetHandleByIndex(i)
-		if ret == nvml.SUCCESS {
-			name, ret := device.GetName()
-			if ret == nvml.SUCCESS {
-				detail.ProductName = strings.ToUpper(convertName(name))
-			}
-			bar1MemoryInfo, ret := device.GetBAR1MemoryInfo()
-			if ret == nvml.SUCCESS {
-				detail.Bar1MemoryUsage.Total = fmt.Sprintf("%d MiB", bar1MemoryInfo.Bar1Total/1024/1024)
-				detail.Bar1MemoryUsage.Used = fmt.Sprintf("%d MiB", bar1MemoryInfo.Bar1Used/1024/1024)
-				detail.Bar1MemoryUsage.Free = fmt.Sprintf("%d MiB", bar1MemoryInfo.Bar1Free/1024/1024)
-			}
-			memoryInfo, ret := device.GetMemoryInfo()
-			if ret == nvml.SUCCESS {
-				detail.FbMemoryUsage.Total = fmt.Sprintf("%d MiB", memoryInfo.Total/1024/1024)
-				detail.FbMemoryUsage.Used = fmt.Sprintf("%d MiB", memoryInfo.Used/1024/1024)
-				detail.FbMemoryUsage.Free = fmt.Sprintf("%d MiB", memoryInfo.Free/1024/1024)
-			}
-
-			processes, err := deviceGetAllRunningProcesses(device)
-			if err == nil {
-				if len(processes) > 0 {
-					detail.Status = "occupied"
-				} else {
-					detail.Status = "available"
+	if len(output) > 0 {
+		reader := bufio.NewReader(strings.NewReader(string(output)))
+		for {
+			line, _, err := reader.ReadLine()
+			if err != nil {
+				if err.Error() == "EOF" {
+					break
 				}
+				break
 			}
-			gpu.Gpu.Details = append(gpu.Gpu.Details, detail)
+			fields := strings.Split(string(line), ",")
+			cg = append(cg, &collectGpu{
+				index:         strings.TrimSpace(fields[0]),
+				driverVersion: strings.TrimSpace(fields[1]),
+				gpuUid:        strings.TrimSpace(fields[2]),
+				gpuName:       strings.TrimSpace(fields[3]),
+				memTotal:      strings.TrimSpace(fields[4]),
+				memUsed:       strings.TrimSpace(fields[5]),
+				memFree:       strings.TrimSpace(fields[6]),
+				status:        "available",
+			})
 		}
 	}
-	return ret
+	return cg, nil
+}
+
+func getUseGpu() ([]usedGpu, error) {
+	var ug []usedGpu
+	cmd := exec.Command("nvidia-smi", "--query-compute-apps=gpu_uuid,gpu_name,process_name", "--format=csv,noheader")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return ug, fmt.Errorf("failed execute nvidia-smi, error:%v", err)
+	}
+
+	if len(output) > 0 {
+		reader := bufio.NewReader(strings.NewReader(string(output)))
+		for {
+			line, _, err := reader.ReadLine()
+			if err != nil {
+				if err.Error() == "EOF" {
+					break
+				}
+				break
+			}
+			fields := strings.Split(string(line), ",")
+			ug = append(ug, usedGpu{
+				guid:        strings.TrimSpace(fields[0]),
+				processName: strings.TrimSpace(fields[2]),
+			})
+		}
+	}
+	return ug, nil
+}
+
+func getCudaVersion() (string, error) {
+	var cudaVersion string
+
+	r, w := io.Pipe()
+	cmd := exec.Command("nvidia-smi", "-q")
+	cmd.Stdout = w
+
+	grepCmd := exec.Command("grep", "CUDA Version")
+	grepCmd.Stdin = r
+
+	var out bytes.Buffer
+	grepCmd.Stdout = &out
+
+	err := cmd.Start()
+	if err != nil {
+		return "", fmt.Errorf("failed starting nvidia-smi command: %v", err)
+	}
+
+	err = grepCmd.Start()
+	if err != nil {
+		return "", fmt.Errorf("failed starting grep command: %v", err)
+	}
+
+	err = cmd.Wait()
+	if err != nil {
+		return "", fmt.Errorf("failed waiting for nvidia-smi command: %v", err)
+	}
+	w.Close()
+	err = grepCmd.Wait()
+	if err != nil {
+		return "", fmt.Errorf("failed waiting for grep command: %v", err)
+	}
+
+	if len(out.String()) > 0 && strings.Contains(out.String(), ":") {
+		cudaVersion = strings.TrimSpace(strings.Split(out.String(), ":")[1])
+	}
+	return cudaVersion, nil
+}
+
+type collectGpu struct {
+	index         string
+	driverVersion string
+	gpuUid        string
+	gpuName       string
+	memTotal      string
+	memUsed       string
+	memFree       string
+	status        string //  occupied  available
+}
+
+type usedGpu struct {
+	guid        string
+	processName string
 }
 
 func convertName(name string) string {
@@ -95,26 +192,4 @@ func convertName(name string) string {
 		}
 	}
 	return name
-}
-
-func deviceGetAllRunningProcesses(device nvml.Device) ([]nvml.ProcessInfo, error) {
-	process1, ret := device.GetComputeRunningProcesses()
-	if ret != nvml.SUCCESS {
-		return nil, fmt.Errorf("ERROR:: unable to get device index: %d", ret)
-	}
-
-	process2, ret := device.GetGraphicsRunningProcesses()
-	if ret != nvml.SUCCESS {
-		return nil, fmt.Errorf("ERROR:: unable to get device index: %d", ret)
-	}
-
-	processInfo := make([]nvml.ProcessInfo, 0)
-
-	if len(process1) > 0 {
-		processInfo = append(processInfo, process1...)
-	}
-	if len(process2) > 0 {
-		processInfo = append(processInfo, process2...)
-	}
-	return processInfo, nil
 }
