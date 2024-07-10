@@ -26,7 +26,7 @@ func printLog() {
 	nodeInfo := new(device.NodeInfo)
 	err := device.GetGpu(nodeInfo)
 	if err != nil {
-		fmt.Printf("The node collect gpu info failed, if the node does not have a GPU, this error can be ignored. code: %d\n", err)
+		fmt.Printf("The node collect gpu info failed, if the node does not have a GPU, this error can be ignored. %v\n", err)
 	}
 
 	err = device.GetHardwareData(nodeInfo)
