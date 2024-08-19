@@ -10,7 +10,7 @@ import (
 func main() {
 	printLog()
 
-	ticker := time.NewTicker(20 * time.Minute)
+	ticker := time.NewTicker(1 * time.Minute)
 	defer ticker.Stop()
 	for {
 		select {
