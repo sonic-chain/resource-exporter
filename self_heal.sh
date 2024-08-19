@@ -1,7 +1,5 @@
 #!/bin/bash
 
-path = $PATH
-
 if ! command -v nvidia-smi &> /dev/null; then
     echo "$(date): not found gpu"
     exit 0
