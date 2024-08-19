@@ -79,6 +79,8 @@ func checkCpuName() (string, error) {
 		cpuName = "INTEL"
 	} else if strings.Contains(strings.ToLower(matches[1]), "amd") {
 		cpuName = "AMD"
+	} else {
+		cpuName = strings.ToLower(matches[1])
 	}
 	return cpuName, nil
 }

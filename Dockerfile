@@ -14,5 +14,6 @@ RUN go mod download \
 
 FROM nvidia/cuda:11.2.2-base-ubuntu20.04
 COPY --from=builder /app/resource-exporter .
-
-CMD ["./resource-exporter"]
+COPY self_heal.sh /usr/local/bin/self_heal.sh
+RUN chmod +x /usr/local/bin/self_heal.sh
+CMD ["sh", "-c", "/usr/local/bin/self_heal.sh & ./resource-exporter"]
