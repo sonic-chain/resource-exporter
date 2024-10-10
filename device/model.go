@@ -22,6 +22,7 @@ type GpuDetail struct {
 	FbMemoryUsage   Common `json:"fb_memory_usage"`
 	Bar1MemoryUsage Common `json:"bar1_memory_usage"`
 	Status          string `json:"status"`
+	Guid            string `json:"guid"`
 }
 
 type Common struct {
