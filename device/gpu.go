@@ -40,8 +40,9 @@ func GetGpu(gpu *NodeInfo) error {
 	var gpuDetail []GpuDetail
 	for _, info := range gInfo {
 		gpuDetail = append(gpuDetail, GpuDetail{
-			Guid:        info.gpuUid,
-			ProductName: strings.ToUpper(convertName(info.gpuName)),
+			Guid:         info.gpuUid,
+			OriginalName: info.gpuName,
+			ProductName:  strings.ToUpper(convertName(info.gpuName)),
 			FbMemoryUsage: Common{
 				Total: info.memTotal,
 				Used:  info.memUsed,
