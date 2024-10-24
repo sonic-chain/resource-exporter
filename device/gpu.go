@@ -40,7 +40,7 @@ func GetGpu(gpu *NodeInfo) error {
 	var gpuDetail []GpuDetail
 	for _, info := range gInfo {
 		gpuDetail = append(gpuDetail, GpuDetail{
-			Id:           info.index,
+			Index:        info.index,
 			OriginalName: info.gpuName,
 			ProductName:  strings.ToUpper(convertName(info.gpuName)),
 			FbMemoryUsage: Common{
@@ -58,7 +58,7 @@ func GetGpu(gpu *NodeInfo) error {
 func getGpuInfo() ([]*collectGpu, error) {
 	var cg []*collectGpu
 	var err error
-	cmd := exec.Command("nvidia-smi", "--query-gpu=driver_version,gpu_uuid,gpu_name,memory.total,memory.used,memory.free", "--format=csv,noheader")
+	cmd := exec.Command("nvidia-smi", "--query-gpu=index,driver_version,gpu_uuid,gpu_name,memory.total,memory.used,memory.free", "--format=csv,noheader")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return nil, fmt.Errorf("failed execute nvidia-smi, error:%v", err)
