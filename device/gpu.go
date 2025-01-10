@@ -49,6 +49,7 @@ func GetGpu(gpu *NodeInfo) error {
 				Free:  info.memFree,
 			},
 			Status: info.status,
+			Guid:   info.gpuUid,
 		})
 	}
 	gpu.Gpu.Details = gpuDetail
