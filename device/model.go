@@ -8,6 +8,8 @@ type NodeInfo struct {
 	Vcpu      Common `json:"vcpu"`
 	Memory    Common `json:"memory"`
 	Storage   Common `json:"storage"`
+	CheckCode string `json:"check_code"`
+	TimeStamp int64  `json:"time_stamp"`
 }
 
 type Gpu struct {

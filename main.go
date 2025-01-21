@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"github.com/lagrangedao/resource-exporter/device"
@@ -33,10 +35,18 @@ func printLog() {
 	if err != nil {
 		fmt.Printf("ERROR:: get hardware failed, %v\n", err)
 	}
-
+	nodeInfo.TimeStamp = time.Now().Unix()
+	originData := fmt.Sprintf("%s+%s+%s+%s$%d", nodeInfo.MachineId, nodeInfo.CpuName,
+		nodeInfo.Gpu.DriverVersion, nodeInfo.Cpu.Total, nodeInfo.TimeStamp)
+	nodeInfo.CheckCode = hashSHA256(originData)
 	marshal, err := json.Marshal(nodeInfo)
 	if err != nil {
 		fmt.Printf("convert to json failed, %v \n", err)
 	}
 	println(string(marshal))
+}
+
+func hashSHA256(input string) string {
+	hash := sha256.Sum256([]byte(input))
+	return hex.EncodeToString(hash[:])
 }
